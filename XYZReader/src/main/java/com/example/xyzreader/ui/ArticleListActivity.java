@@ -1,5 +1,6 @@
 package com.example.xyzreader.ui;
 
+import android.app.ActivityOptions;
 import android.app.LoaderManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -70,6 +71,13 @@ public class ArticleListActivity extends AppCompatActivity implements
 
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refresh();
+            }
+        });
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         getLoaderManager().initLoader(0, null, this);
@@ -214,8 +222,8 @@ public class ArticleListActivity extends AppCompatActivity implements
                                             Palette.Swatch textSwatch = palette.getDominantSwatch();
 
                                             holder.cardView.setBackgroundColor(textSwatch.getRgb());
-                                            holder.titleView.setTextColor(textSwatch.getTitleTextColor());
-                                            holder.subtitleView.setTextColor(textSwatch.getBodyTextColor());
+                                            holder.titleView.setTextColor(textSwatch.getBodyTextColor());
+                                            holder.subtitleView.setTextColor(textSwatch.getTitleTextColor());
                                         }
                                     });
 
