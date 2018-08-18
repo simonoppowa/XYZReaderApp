@@ -22,4 +22,6 @@
     <color name="theme_primary_dark">#388E3C</color>
     <color name="theme_accent">#af4cac</color>
     <color name="ltgray">#787878</color>
+
+    <color name="fab_background">#000000</color>
 </resources>

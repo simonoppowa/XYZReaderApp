@@ -78,6 +78,8 @@ public class ArticleDetailFragment extends Fragment implements
 
     private LinearLayout mTitleLayout;
 
+    private Target myTarget;
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -146,7 +148,6 @@ public class ArticleDetailFragment extends Fragment implements
             }
         });
 
-        bindViews();
         return mRootView;
     }
 
@@ -163,6 +164,7 @@ public class ArticleDetailFragment extends Fragment implements
 
     private void bindViews() {
         if (mRootView == null) {
+            Log.d(TAG, "RootView null");
             return;
         }
 
@@ -196,51 +198,50 @@ public class ArticleDetailFragment extends Fragment implements
             }
             bodyView.setText(Html.fromHtml(mCursor.getString(ArticleLoader.Query.BODY).replaceAll("(\r\n|\n)", "<br />")));
 
-            Picasso.with(getActivity())
+            Picasso picasso = Picasso.with(getActivity());
+            picasso.setLoggingEnabled(true);
+
+            myTarget = new Target() {
+                @Override
+                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+
+                    mPhotoView.setImageBitmap(bitmap);
+                    //mPhotoView.setImageDrawable(getResources().getDrawable(R.drawable.logo));
+
+                    Palette.from(bitmap)
+                            .generate(new Palette.PaletteAsyncListener() {
+                                @Override
+                                public void onGenerated(@NonNull Palette palette) {
+                                    Palette.Swatch textSwatch = palette.getDominantSwatch();
+                                    if(textSwatch == null) {
+                                        Log.d(TAG, "No dominant swatch");
+                                        textSwatch = palette.getVibrantSwatch();
+                                    }
+
+                                    mTitleLayout.setBackgroundColor(textSwatch.getRgb());
+                                    titleView.setTextColor(textSwatch.getBodyTextColor());
+                                    bylineView.setTextColor(textSwatch.getTitleTextColor());
+                                }
+                            });
+
+                }
+
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) {
+                    Log.d(TAG, "Loading bitmap failed");
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+                    mPhotoView.setImageDrawable(getResources().getDrawable(R.drawable.logo));
+                }
+            };
+
+            picasso.with(getActivity())
                     .load(mCursor.getString(ArticleLoader.Query.PHOTO_URL))
-                    .into(new Target() {
-                        @Override
-                        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-
-                            mPhotoView.setImageBitmap(bitmap);
-
-                            Palette.from(bitmap)
-                                    .generate(new Palette.PaletteAsyncListener() {
-                                        @Override
-                                        public void onGenerated(@NonNull Palette palette) {
-                                            Palette.Swatch textSwatch = palette.getDominantSwatch();
-                                            if(textSwatch == null) {
-                                                Log.d(TAG, "No dominant swatch");
-                                                textSwatch = palette.getVibrantSwatch();
-                                            }
-
-                                            mTitleLayout.setBackgroundColor(textSwatch.getRgb());
-                                            titleView.setTextColor(textSwatch.getBodyTextColor());
-                                            bylineView.setTextColor(textSwatch.getTitleTextColor());
-                                            Window window = getActivity().getWindow();
-
-                                            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-                                            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-                                        }
-                                    });
-
-                        }
-
-                        @Override
-                        public void onBitmapFailed(Drawable errorDrawable) {
-                            Log.d(TAG, "Loading bitmap failed");
-                        }
-
-                        @Override
-                        public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                        }
-                    });
+                    .into(myTarget);
         } else {
-            mRootView.setVisibility(View.GONE);
-            titleView.setText("N/A");
-            bylineView.setText("N/A" );
-            bodyView.setText("N/A");
+            Log.d(TAG, "Cursor null");
         }
     }
 
@@ -251,27 +252,19 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        if (!isAdded()) {
-            if (cursor != null) {
-                cursor.close();
-            }
+
+        if (cursor == null || cursor.isClosed() || !cursor.moveToFirst()) {
+            Log.d(TAG, "Cursor error");
             return;
         }
 
         mCursor = cursor;
-        if (mCursor != null && !mCursor.moveToFirst()) {
-            Log.e(TAG, "Error reading item detail cursor");
-            mCursor.close();
-            mCursor = null;
-        }
 
         bindViews();
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
-        mCursor = null;
-        bindViews();
     }
 
     public int getUpButtonFloor() {
