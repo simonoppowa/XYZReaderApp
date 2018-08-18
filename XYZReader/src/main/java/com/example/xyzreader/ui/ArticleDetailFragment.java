@@ -201,7 +201,6 @@ public class ArticleDetailFragment extends Fragment implements
                     .into(new Target() {
                         @Override
                         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                            assert titleView != null;
 
                             mPhotoView.setImageBitmap(bitmap);
 
